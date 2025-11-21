@@ -1,81 +1,88 @@
 // ============================
-// CONFIGURAÇÕES DO SISTEMA
+//  GRÁFICO BTC
 // ============================
-const API_URL = "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT";
-const UPDATE_INTERVAL = 5000; // Atualiza a cada 5 segundos
 
-let priceHistory = []; // Armazena últimos preços para cálculos
+const ctx = document.getElementById('priceChart').getContext('2d');
+
+let priceData = [];
+let timeLabels = [];
+
+const priceChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: timeLabels,
+        datasets: [{
+            label: 'BTC/USDT',
+            data: priceData,
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: false }
+        }
+    }
+});
 
 // ============================
-// FUNÇÃO PARA BUSCAR O PREÇO
+//  BUSCAR PREÇO
 // ============================
-async function fetchBTCPrice() {
+
+async function fetchBTC() {
     try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
+        const req = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT");
+        const data = await req.json();
+
         const price = parseFloat(data.price);
+        const time = new Date().toLocaleTimeString("pt-BR");
 
-        // Atualiza histórico
-        priceHistory.push(price);
-        if (priceHistory.length > 50) priceHistory.shift();
+        // atualiza gráfico
+        priceData.push(price);
+        timeLabels.push(time);
 
-        updateDisplay(price);
-        analyze(price);
+        // mantém no máximo 20 pontos para não pesar
+        if (priceData.length > 20) {
+            priceData.shift();
+            timeLabels.shift();
+        }
 
-    } catch (error) {
-        console.error("Erro ao buscar preço:", error);
-        document.getElementById("status").innerHTML = "Erro ao atualizar dados.";
+        priceChart.update();
+
+        // atualiza texto do sinal
+        updateSignal(price);
+
+    } catch (e) {
+        console.log("Erro ao buscar preço:", e);
     }
 }
 
+// chama fetch a cada 6s
+setInterval(fetchBTC, 6000);
+fetchBTC();
+
 // ============================
-// FUNÇÃO DE ANÁLISE DO SISTEMA
+//  SINAL SIMPLES
 // ============================
-function analyze(currentPrice) {
-    if (priceHistory.length < 20) return;
 
-    // Média móvel simples
-    const sma20 = priceHistory.slice(-20).reduce((a, b) => a + b, 0) / 20;
+let lastPrice = null;
 
-    // ============================
-    // LÓGICA DO SINAL
-    // ============================
-    let signal = "";
-    let color = "";
+function updateSignal(price) {
+    const signal = document.getElementById("signal");
 
-    if (currentPrice < sma20 * 0.985) {
-        signal = "FORTE SINAL DE COMPRA";
-        color = "#0f0"; // verde
-    } else if (currentPrice > sma20 * 1.015) {
-        signal = "SINAL DE VENDA";
-        color = "#f00"; // vermelho
+    if (!lastPrice) {
+        lastPrice = price;
+        signal.innerHTML = "Aguardando dados...";
+        return;
+    }
+
+    if (price < lastPrice) {
+        signal.innerHTML = "🔔 BUY SIGNAL — Preço caiu, oportunidade de compra";
+        signal.style.color = "lime";
     } else {
-        signal = "AGUARDAR • Mercado neutro";
-        color = "#fff"; // branco
+        signal.innerHTML = "Aguardando novo sinal...";
+        signal.style.color = "white";
     }
 
-    // Exibe resultado
-    document.getElementById("signal").innerHTML = signal;
-    document.getElementById("signal").style.color = color;
-
-    document.getElementById("sma").innerHTML =
-        "Média móvel (20 períodos): " + sma20.toFixed(2);
+    lastPrice = price;
 }
-
-// ============================
-// EXIBE O PREÇO NA TELA
-// ============================
-function updateDisplay(price) {
-    document.getElementById("btc-price").innerHTML = price.toFixed(2) + " USDT";
-
-    const date = new Date();
-    document.getElementById("status").innerHTML =
-        "Última atualização: " +
-        date.toLocaleTimeString("pt-BR", { hour12: false });
-}
-
-// ============================
-// LOOP AUTOMÁTICO
-// ============================
-fetchBTCPrice();
-setInterval(fetchBTCPrice, UPDATE_INTERVAL);
