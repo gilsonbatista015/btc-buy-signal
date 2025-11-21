@@ -1,78 +1,31 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>BTC Buy Signal</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f3f3f3;
-    margin: 0;
-    padding: 0;
-  }
-  .container {
-    max-width: 420px;
-    margin: auto;
-    padding: 20px;
-    text-align: center;
-  }
-  .card {
-    background: #fff;
-    padding: 20px;
-    border-radius: 20px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    margin-top: 20px;
-  }
-  button {
-    width: 100%;
-    padding: 15px;
-    margin-top: 20px;
-    font-size: 18px;
-    border: none;
-    border-radius: 12px;
-    background: #007bff;
-    color: #fff;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC Buy Signal</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
-  <h1>BTC Buy Signal</h1>
 
-  <div id="priceBox" class="card">Carregando preço...</div>
+    <h1>BTC Buy Signal</h1>
 
-  <div id="signalBox" class="card">Analisando mercado...</div>
+    <!-- GRÁFICO -->
+    <div class="card">
+        <h2>Gráfico BTC/USDT</h2>
+        <canvas id="priceChart"></canvas>
+    </div>
 
-  <button onclick="updatePrice()">Atualizar Dados</button>
-</div>
+    <!-- SINAL -->
+    <div class="card">
+        <h2>Sinal Atual</h2>
+        <p id="signal">Carregando...</p>
+    </div>
 
-<script>
-async function updatePrice() {
-  try {
-    const res = await fetch("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT");
-    const data = await res.json();
-    const price = parseFloat(data.price);
-
-    document.getElementById("priceBox").innerHTML =
-      `Preço Atual: <b>US$ ${price.toLocaleString()}</b>`;
-
-    if (price < 90000) {
-      document.getElementById("signalBox").innerHTML =
-        "⚡ Forte sinal de compra: BTC muito abaixo da média.";
-    } else if (price < 95000) {
-      document.getElementById("signalBox").innerHTML =
-        "📉 Pode ser uma compra moderada.";
-    } else {
-      document.getElementById("signalBox").innerHTML =
-        "⛔ Preço alto. Melhor aguardar correção.";
-    }
-  } catch (e) {
-    document.getElementById("signalBox").innerHTML = "Erro ao buscar dados.";
-  }
-}
-
-updatePrice();
-</script>
+    <script src="script.js"></script>
 </body>
 </html>
